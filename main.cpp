@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <list>
+#include <fstream>
 
 #include "StormLib.h"
 
@@ -220,6 +221,26 @@ list<TCHAR*>* retrieveArgs(const int argc, TCHAR* argv []) {
 	return &args;
 }
 
+char* copy(const char* fname_in) {
+	int len = strlen(fname_in) + 7;
+	char* fname_out = new char[len];
+
+	memcpy(fname_out, fname_in, len - 11);
+	fname_out[len - 11] = ' ';
+	fname_out[len - 10] = '(';
+	fname_out[len - 9] = 'o';
+	fname_out[len - 8] = 'u';
+	fname_out[len - 7] = 't';
+	fname_out[len - 6] = ')';
+	fname_out[len - 5] = 0;
+	memcpy(fname_out + len - 5, fname_in + len - 11, 4);
+
+	std::ifstream src(fname_in, std::ios::binary);
+	std::ofstream dst(fname_out, std::ios::binary);
+
+	return fname_out;
+}
+
 int main(int argc, TCHAR* argv []) {
 	if (argc == 1) {
 		cout << "Expected Map Name" << endl;
@@ -229,7 +250,14 @@ int main(int argc, TCHAR* argv []) {
 	HANDLE mpq = NULL;
 	HANDLE file = NULL;
 
-	if (SFileOpenArchive(argv[1], NULL, 0, &mpq)) {
+	const char* fname_out = copy(argv[1]);
+
+	cout << fname_out << endl;
+
+	delete [] fname_out;
+	return 0;
+
+	if (SFileOpenArchive(fname_out, NULL, 0, &mpq)) {
 		LCID id = NULL;
 
 		if (SFileOpenFileEx(mpq, "war3map.j", SFILE_OPEN_FROM_MPQ, &file)) {
@@ -263,6 +291,8 @@ int main(int argc, TCHAR* argv []) {
 		SFileCompactArchive(mpq, NULL, false);
 		SFileCloseArchive(mpq);
 	}
+
+	delete [] fname_out;
 
 	return 0;
 }
