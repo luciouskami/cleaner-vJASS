@@ -238,6 +238,11 @@ char* copy(const char* fname_in) {
 	std::ifstream src(fname_in, std::ios::binary);
 	std::ofstream dst(fname_out, std::ios::binary);
 
+	dst << src.rdbuf();
+
+	src.close();
+	dst.close();
+
 	return fname_out;
 }
 
