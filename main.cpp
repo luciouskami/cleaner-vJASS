@@ -252,11 +252,6 @@ int main(int argc, TCHAR* argv []) {
 
 	const char* fname_out = copy(argv[1]);
 
-	cout << fname_out << endl;
-
-	delete [] fname_out;
-	return 0;
-
 	if (SFileOpenArchive(fname_out, NULL, 0, &mpq)) {
 		LCID id = NULL;
 
