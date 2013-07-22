@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdint.h>
+#include <list>
 
 #include "StormLib.h"
 
@@ -58,25 +59,6 @@ void str_find(StrLine& line, const char* keyword) {
 	if (keyword[i] == 0 || keyword[i] == '*') {
 		line.pos = i;
 	}
-}
-
-bool checkImport(StrLine& line, Script& output, Keywords& keywords) {
-	if (line.dat[line.pos] == '/') {
-		if (compareFull(line.dat, keywords.import)) {
-			str_find(line, keywords.import);
-			output.concat("//! import \"");
-			output.concat(line.dat + line.pos);
-			output.pos -= 2;
-			output.concat("\"\n");
-		} //if
-		else if (compareFull(line.dat, keywords.import2)) {
-			output.concat(line.dat);
-		}
-
-		return true;
-	} //if
-
-	return false;
 }
 
 bool checkGlobals(StrLine& line, Script& output, Keywords& keywords) {
@@ -213,8 +195,7 @@ Script* cleanScript(Script& input, const DWORD FILE_SIZE) {
 	while (input.dat[input.pos] != 0) {
 		readLine(input, line);
 
-		if (checkImport(line, output, keywords));
-		else if (checkComment(line));
+		if (checkComment(line));
 		else if (checkFunc(line, output, keywords));
 		else if (checkGlobals(line, output, keywords));
 		else if (checkTriggers(line, output, keywords));
@@ -225,6 +206,18 @@ Script* cleanScript(Script& input, const DWORD FILE_SIZE) {
 	}
 
 	return &output;
+}
+
+list<TCHAR*>* retrieveArgs(const int argc, TCHAR* argv []) {
+	list<TCHAR*>& args = *new list<TCHAR*>();
+
+	for (int i = 2; i < argc; ++i) {
+		if (argv[i][0] == '-' && argv[i][1] == 'i') {
+			args.push_back(argv[++i]);
+		}
+	}
+
+	return &args;
 }
 
 int main(int argc, TCHAR* argv []) {
@@ -248,6 +241,14 @@ int main(int argc, TCHAR* argv []) {
 			SFileCloseFile(file);
 
 			Script& output = *cleanScript(input, FILE_SIZE);
+
+			list<TCHAR*>& args = *retrieveArgs(argc, argv);
+			for (char* str : args) {
+				output.concat("//! import \"");
+				output.concat(str);
+				output.concat("\"\n");
+			}
+			delete &args;
 
 			if (SFileCreateFile(mpq, "war3map.j", 0, output.pos, id, MPQ_FILE_REPLACEEXISTING | MPQ_FILE_COMPRESS, &file)) {
 				SFileWriteFile(file, output.dat, output.pos, MPQ_COMPRESSION_HUFFMANN);
